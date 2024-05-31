@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
+	<!-- [STUDIO:"security-schema-mainFlow"]<sub-flow name="security-schema-mainFlow" doc:id="ba5c68f6-7278-497c-ae0d-9a93faa109e0" >
+		<http:basic-security-filter doc:name="Basic security filter" doc:id="8e985a20-5437-4b3f-89d2-45951f8bd73f" realm="${spring.realm}"/>
+		<spring:authorization-filter doc:name="Authorization filter" doc:id="f0277fb4-4550-4ac9-b881-366bfcaf705d" requiredAuthorities="ROLE_ADMIN"/>
+	</sub-flow> [STUDIO] -->
+</mule>

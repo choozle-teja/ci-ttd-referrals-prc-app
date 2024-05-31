@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:slack="http://www.mulesoft.org/schema/mule/slack"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns:error-handler-plugin="http://www.mulesoft.org/schema/mule/error-handler-plugin"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/error-handler-plugin http://www.mulesoft.org/schema/mule/error-handler-plugin/current/mule-error-handler-plugin.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/slack http://www.mulesoft.org/schema/mule/slack/current/mule-slack.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_Config"
+		doc:name="HTTP Listener config"
+		doc:id="27f34654-ee0c-42e8-bc29-b5d8569a06a5">
+		<http:listener-connection host="${http.host}"
+			port="${http.port}" readTimeout="${http.readTimeout}"
+			connectionIdleTimeout="${http.idleTimeout}" protocol="HTTPS">
+			<tls:context>
+				<tls:trust-store insecure="true" />
+				<tls:key-store type="${keyStore.type}"
+					path="${keyStore.path}" alias="${keyStore.alias}"
+					keyPassword="${keyStore.keyPassword}"
+					password="${keyStore.password}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="9d015d85-152c-471d-92cc-550b039460df"
+		doc:description="Environment-agnostic properties"
+		file="configurations\common.yaml" />
+	<configuration-properties
+		doc:name="Configuration properties"
+		doc:id="1d9c81de-790e-4832-b752-60c31f8d8215"
+		file="configurations/${mule.env}.yaml"
+		doc:description="Environment-specific properties" />
+	<secure-properties:config
+		name="Secure_Properties_Config" doc:name="Secure Properties Config"
+		doc:id="9174e84d-c26a-4ac8-b9b7-e5ddec0ec37b"
+		doc:description="Environment-specific secure properties"
+		file="configurations/secure-${mule.env}.yaml" key="${mule.key}" />
+	<configuration doc:name="Configuration"
+		doc:id="b60c720d-001e-481b-ae95-d49e50405b75"
+		defaultErrorHandler-ref="global-error-handler"
+		doc:description="Global configuration for default error handler" />
+	<salesforce:sfdc-config name="Salesforce_Config"
+		doc:name="Salesforce Config"
+		doc:id="2a27fa81-f094-48d8-b583-ba7c42f19755"
+		readTimeout="${salesforce.read-timeout}">
+		<salesforce:jwt-connection
+			consumerKey="${secure::salesforce.consumer-key}"
+			keyStore="${salesforce.jks-file}"
+			storePassword="${secure::salesforce.store-password}"
+			certificateAlias="${salesforce.cert-alias}"
+			principal="${salesforce.principal}"
+			tokenEndpoint="${salesforce.token-endpoint}"
+			objectTTL="${salesforce.object-ttl}"
+			maxEntries="${salesforce.max-entries}"
+			connectionTimeout="${salesforce.connection-timeout}"
+			loginRequestTimeout="${salesforce.login-request-timeout}" >
+			<reconnection >
+				<reconnect frequency="${salesforce.frequency}" count="${salesforce.reconnection-attempts}"/>
+			</reconnection>
+		</salesforce:jwt-connection>
+	</salesforce:sfdc-config>
+	<!-- <slack:config name="Slack_Connector_Config"
+		doc:name="Slack Connector Config"
+		doc:id="d5d0ec2c-2596-496a-ae0d-0c592b946ce4"
+		responseTimeout="${slack.response-timeout}">
+		<slack:slack-auth-connection
+			baseUri="${slack.base-uri}" connectionTimeout="${slack.connection-timeout}" maxConnections="${slack.max-connections}" connectionIdleTimeout="${slack.connection-idle-timeout}" responseBufferSize="${slack.response-buffer-size}">
+			<reconnection >
+				<reconnect frequency="${slack.frequency}" count="${slack.reconnection-attempts}" />
+			</reconnection>
+			<slack:oauth-authorization-code
+				consumerKey="${secure::slack.consumer-key}"
+				consumerSecret="${secure::slack.consumer-secret}"
+				scopes="${slack.scopes}"
+				authorizationUrl="${slack.authorization-url}"
+				accessTokenUrl="${slack.access-token-url}" />
+			<slack:oauth-callback-config
+				listenerConfig="HTTP_Listener_Config"
+				callbackPath="${slack.callback-path}"
+				authorizePath="${slack.authorize-path}"
+				externalCallbackUrl="${slack.external-callback-url}" />
+			<slack:oauth-store-config
+				objectStore="Object_store" />
+		</slack:slack-auth-connection>
+	</slack:config> -->
+	<email:imap-config name="Email_IMAP"
+		doc:name="Email IMAP" doc:id="bd6a4dc6-45c6-4be4-a1da-4361f8c69748">
+		<email:imaps-connection host="${email.host}"
+			user="${email.user}" password="${email.password}"
+			connectionTimeout="${email.connection-timeout}"
+			readTimeout="${email.read-timeout}"
+			writeTimeout="${email.write-timeout}" port="${email.port}">
+			<tls:context>
+				<tls:trust-store insecure="true" />
+			</tls:context>
+			<email:properties>
+				<email:property key="mail.debug" value="true" />
+			</email:properties>
+		</email:imaps-connection>
+	</email:imap-config>
+	<!-- <os:config name="ObjectStore_Config"
+		doc:name="ObjectStore Config"
+		doc:id="aaecb37c-bb8c-432e-8638-76f55b98cb51">
+		<os:connection>
+			<reconnection>
+				<reconnect frequency="${object-store.frequency}"
+					count="${object-store.reconnection-attempts}" />
+			</reconnection>
+		</os:connection>
+	</os:config>
+	<os:object-store name="Object_store"
+		doc:name="Object store" doc:id="bbe50eb6-e670-475d-ae97-f932c3d0a0bf"
+		entryTtl="${object-store.entry-ttl}"
+		expirationInterval="${object-store.expiration-interval}"
+		config-ref="ObjectStore_Config" /> -->
+	<slack:config name="Slack_Connector_Config1" doc:name="Slack Connector Config" doc:id="a3c98f92-3683-4191-bd66-60c18affae62" >
+		<slack:slack-auth-connection >
+			<slack:oauth-authorization-code consumerKey="7072336574599.7099584149505" consumerSecret="133fc44976fddaeb5fee26802ec65273" scopes="channels:manage channels:write.invites channels:write.topic im:write mpim:write chat:write chat:write.public groups:write"/>
+			<slack:oauth-callback-config listenerConfig="HTTP_Listener_Config" callbackPath="/callback" authorizePath="/authorize" externalCallbackUrl="https://ci-ttd-referrals-prc-app-5vw5ac.tnlau0.usa-e2.cloudhub.io/callback"/>
+		</slack:slack-auth-connection>
+	</slack:config>
+</mule>

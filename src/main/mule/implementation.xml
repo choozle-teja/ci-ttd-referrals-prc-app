@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:slack="http://www.mulesoft.org/schema/mule/slack" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/slack http://www.mulesoft.org/schema/mule/slack/current/mule-slack.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+	<!-- <slack:config name="Slack_Connector_Config1" doc:name="Slack Connector Config" doc:id="5fe3101a-b2f0-4009-9988-a07040c9d9cb" >
+		<slack:slack-auth-connection >
+			<slack:oauth-authorization-code consumerKey="7072336574599.7099584149505" consumerSecret="133fc44976fddaeb5fee26802ec65273" scopes="channels:manage channels:write.invites channels:write.topic im:write mpim:write chat:write chat:write.public groups:write" authorizationUrl="https://slack.com/oauth/v2/authorize" accessTokenUrl="https://slack.com/api/oauth.v2.access"/>
+			<slack:oauth-callback-config listenerConfig="HTTP_Listener_Config" callbackPath="/callback" authorizePath="/authorize" externalCallbackUrl="https://slack-demo-5vw5ac.tnlau0.usa-e2.cloudhub.io/callback" />
+		</slack:slack-auth-connection>
+	</slack:config> -->
+<flow name="ttd-referrals-flow" doc:id="e8cc33f8-095e-4113-8b54-3b14bbf5c46b" >
+		<email:listener-imap doc:id="77a685a4-9126-4d2f-969e-4fdfcfcc7a5a" config-ref="Email_IMAP" doc:name="On New Email - IMAP" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="30" timeUnit="SECONDS" />
+			</scheduling-strategy>
+		</email:listener-imap>
+		<logger level="INFO" doc:name="LOG Start" doc:id="d8ae0987-af3d-4f7c-85f6-43b15eba5c21" message='#["Start of the flow : " ++ flow.name]' />
+		<set-variable value="#[attributes.receivedDate]" doc:name="Email Received Date" doc:id="f735da4e-0231-4fb9-bb1b-b0c06b444a26" variableName="emailReceivedDate"/>
+		<set-variable value="#[attributes.subject]" doc:name="Email Subject" doc:id="f12f6571-8dca-4e4b-bc76-849bb3bd5337" variableName="emailSubject"/>
+		<parse-template doc:name="Parse Template" doc:id="a2519afd-3aff-4426-9b8d-0690d583830a" target="requestBody">
+			<content>#[payload]</content>
+		</parse-template>
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;vars.requestBody]' doc:name="Conversion into JSON" doc:id="a98fa193-b00c-4ae8-8b2c-c7dc612fa2ba" />
+		<logger level="INFO" doc:name="LOG parsed payload" doc:id="b97ac378-7552-47e2-91fb-7adbe767f5bd" message="#[payload]" />
+		<flow-ref doc:name="Refer to update-leads-to-salesforce-sub-flow" doc:id="326ea110-63af-42ad-9d15-25b74906119a" name="update-leads-to-salesforce-sub-flow"/>
+		<flow-ref doc:name="Refer to send-message-to-slack" doc:id="de2c4889-8c1c-45b4-a469-50aa5f6740d5" name="send-message-to-slack"/>
+		<logger level="INFO" doc:name="LOG End" doc:id="efdef519-ced9-4310-9582-6d7d5255d01d" message='#["End of the flow : " ++ flow.name]' />
+		<error-handler ref="global-error-handler" />
+	</flow>
+	<sub-flow name="update-leads-to-salesforce-sub-flow" doc:id="2ea60c42-2bf2-4ddc-b58f-027bc510317a" >
+		<logger level="INFO" doc:name="LOG Start" doc:id="6989c43f-6722-4303-85aa-dfa4345dc022" message='#["Start of flow " ++ flow.name]'/>
+		<set-variable value="#[%dw 2.0&#10;import * from dw::core::Strings&#10;output application/json&#10;---&#10;substringBefore(vars.emailSubject, &quot;:&quot;) == 'Re']" doc:name="Subject Validation" doc:id="5ce5721c-98e7-474d-b190-934c3a5e6a59" variableName="subjectValidation" />
+		<validation:is-false doc:name="Check if email begin with Re1" doc:id="1d5fb290-3859-4ac4-987e-e77cb7d0e77b" expression="#[vars.subjectValidation]" message='Not proceeding further as email begins with \"Re\"' />
+		<ee:transform doc:name="Extract fields for create lead" doc:id="c7f142d2-0889-4164-8e83-86a0ed70028d" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="upsertPayload" ><![CDATA[%dw 2.0
+input payload text/plain
+output application/java
+import * from dw::core::Strings
+//var val = ((payload replace "=\"" with (""))replace "\n" with ("")) replace  "\\r\\n" with("")
+//var val = payload replace  "\\r\\n" with("")
+var val = ((payload replace "=\"" with (""))) replace  "\\r\\n" with("")
+---
+
+[{
+	
+	FirstName:((substringBefore(substringAfter(val,"*Lead Name: *"),"- *Job title:")) splitBy " ")[0],
+	LastName: ((substringBefore(substringAfter(val,"*Lead Name: *"),"- *Job title:")) splitBy " ")[1],
+	Title:substringBefore(substringAfter(val,"*Job title: *"),"- *Company: *"),
+	Company:substringBefore(substringAfter(val,"- *Company: *"),"-* Company Type:*"),
+	Phone:substringBefore(substringAfter(val,"*Phone Number:* "),"- *Additional Address Info:*"),
+	MobilePhone:substringBefore(substringAfter(val,"*Phone Number:* "),"- *Additional Address Info:*"),
+	Email:substringBefore(substringAfter(val,"- *Email:* "),"- *Original Source:*"),
+	Website:substringBefore(substringAfter(val,"- *Website:* "),"- *Message:*"),
+	Description:substringBefore(substringAfter(val,"*Comments from TTD**:*"),"*GENERAL INFO:*"),
+	LeadSource:"Referral - The Trade Desk",
+	Status:"Warm",
+	Number__c:substringBefore(substringAfter(val,"- *Company Size:* "),"- *DSPs Used:*"),
+	Conversion_Date__c:vars.emailReceivedDate as DateTime {format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"},
+	Conversion_Object_Name__c:"TTD Referral",
+}]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG payload of upsert" doc:id="41de5d73-2fb1-45e9-9914-e52f4268db88" message="#[vars.upsertPayload]" />
+		<salesforce:upsert doc:name="Upsert Lead to Salesforce" doc:id="34ecb16e-e1dc-4411-977f-81b481fc29ac" config-ref="Salesforce_Config" objectType="Lead" externalIdFieldName="Email">
+			<salesforce:records><![CDATA[#[vars.upsertPayload]]]></salesforce:records>
+		</salesforce:upsert>
+		<ee:transform doc:name="Conversion to JSON" doc:id="79bfd781-6854-456e-b03d-35a703cedca3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="LOG Salesforce Response" doc:id="eaae6a78-4553-4040-9d7e-f7011615d34f" message="#[payload]" />
+		<choice doc:name="Check Any error" doc:id="1e18d8cd-4be9-4046-b9b0-e32634c7ebed" >
+			<when expression="#[!(payload.successful)]">
+				<set-variable value='#[payload.items.exception.message[0] default "Unknown exception from Salesforce"]' doc:name="Error Message" doc:id="7f903aba-0f31-4fd1-b6af-a1cb6b1ba64b" variableName="errMsg"/>
+				<raise-error doc:name="Raise error" doc:id="37476fb9-7520-4388-8aa1-0bf8989dab62" type="SALESFORCE_LEAD:UPSERT_FAILED" description="#[vars.errMsg]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="LOG End" doc:id="79f0be05-eb6f-47d7-938b-e67cdf89eb87" message='#["End of flow " ++ flow.name]' />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="send-message-to-slack" doc:id="3d456204-9f0d-470d-93ef-52a5ff4de8c4" >
+		<logger level="INFO" doc:name="LOG Start" doc:id="08f6bab0-8d8b-4d90-8667-21447ace831d" message='#["Start of flow " ++ flow.name]'/>
+		<set-variable value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"Name" : vars.upsertPayload.FirstName[0] ++ " " ++ vars.upsertPayload.LastName[0],&#10;	"Company" : vars.upsertPayload.Company[0],&#10;	"Email" : vars.upsertPayload.Email[0],&#10;	"SF Link" : "https://choozle--uat.sandbox.my.salesforce.com/" ++ payload.items[0].id&#10;}]' doc:name="Leads Slack Message Mapping" doc:id="9379bd03-ff28-4c84-9d26-0002a2bda2c9" variableName="messageMapping"/>
+		<set-variable value='#[%dw 2.0&#10;output text/plain&#10;---&#10;"The following lead was created from a Trade Desk referral: \nName: " ++ vars.messageMapping.Name ++ "\nCompany: " ++ vars.messageMapping.Company ++"\nEmail: "++ vars.messageMapping.Email ++ "\nSF Link: " ++ vars.messageMapping."SF Link"]' doc:name="Slack Text Message" doc:id="9f24faac-9a4f-4fc3-a5ee-6095d7ff28d8" variableName="textMessage"/>
+		<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;        channel: "new_leads",&#10;        text: vars.textMessage&#10;}]' doc:name="Slack Response" doc:id="85fc9259-b096-49e6-8483-c404fe4c86d6" />
+		<logger level="INFO" doc:name="LOG Slack response" doc:id="e0518475-5d12-42c2-953c-32ffffe19d47" message="#[payload]" />
+		<slack:create-chatpost-message doc:name="Send Lead Response" doc:id="faae7863-ecba-43e9-91b3-045876eda542" config-ref="Slack_Connector_Config1" />
+		<logger level="INFO" doc:name="LOG End" doc:id="2b63d34b-6cb5-47ec-8d31-e16785f9a2c1" message='#["Start of flow " ++ flow.name]' />
+	</sub-flow>
+</mule>

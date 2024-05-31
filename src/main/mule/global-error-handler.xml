@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:slack="http://www.mulesoft.org/schema/mule/slack"
+	xmlns:xml-module="http://www.mulesoft.org/schema/mule/xml-module"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:module-custom-logger="http://www.mulesoft.org/schema/mule/module-custom-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:module-logging="http://www.mulesoft.org/schema/mule/module-logging"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/module-logging http://www.mulesoft.org/schema/mule/module-logging/current/mule-module-logging.xsd
+http://www.mulesoft.org/schema/mule/module-custom-logger http://www.mulesoft.org/schema/mule/module-custom-logger/current/mule-module-custom-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/xml-module http://www.mulesoft.org/schema/mule/xml-module/current/mule-xml-module.xsd
+http://www.mulesoft.org/schema/mule/slack http://www.mulesoft.org/schema/mule/slack/current/mule-slack.xsd">
+	<error-handler name="global-error-handler"
+		doc:id="e0d9866c-1914-4a80-ac44-7e0bf4436534">
+		
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate"
+			doc:id="6c121f64-3610-47ca-98c8-78636b2ce224" type="ANY">
+			<set-variable value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"error": ((error.errorType.namespace default "") ++ ":" ++ (error.errorType.identifier default "")),&#10;	"app": "ci-ttd-referrals-prc-app",&#10;	"timestamp": now() as String,&#10;	"link" : "https://anypoint.mulesoft.com/cloudhub/#/console/applications/runtimeFabric/0d1f61ce-ba8f-42de-a367-252c144fd25c/log"&#10;}]' doc:name="Error Message" doc:id="0cec6a4b-9e84-4177-9d96-c5bb58985533" variableName="errorMessage"/>
+			<logger level="INFO" doc:name="Logger" doc:id="0ff85a8c-fa8d-4318-aebc-8d2740109f8c" message="#[vars.errorMessage]" />
+			<set-variable value='#[%dw 2.0&#10;output text/plain&#10;---&#10;"An error has occurred in TTD Referrals Integration. Please find the details below: \nError: " ++ vars.errorMessage.error ++ "\nMulesoft App: " ++ vars.errorMessage.app ++"\nTimeStamp: "++ vars.errorMessage.timestamp ++ "\nLink to Logs: " ++ vars.errorMessage.link]' doc:name="Slack Error Text" doc:id="14cf1e5d-d70b-424a-82bc-11b2681fd825" variableName="errorText"/>
+			<logger level="INFO" doc:name="Logger" doc:id="d8f5001b-310c-4ebc-b022-deb20bd81cd3" message="#[vars.errorText]"/>
+			<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;        channel: "mulesoft_notifications",&#10;        text: vars.errorText&#10;}]' doc:name="Slack Content" doc:id="a55b8412-9698-417d-b4fa-6a8703380435" />
+			<logger level="INFO" doc:name="Logger" doc:id="868ef394-854d-43c1-b6da-061fa9691d58" message="#[payload]"/>
+			<slack:create-chatpost-message doc:name="Send Message" doc:id="c37bad76-e49e-47c9-aec8-7614ff0b1d89" config-ref="Slack_Connector_Config1">
+			</slack:create-chatpost-message>
+		
+</on-error-propagate>
+		
+	</error-handler>
+</mule>

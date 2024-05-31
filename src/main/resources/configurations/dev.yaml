@@ -1,0 +1,64 @@
+# Development environment-specific properties
+
+http:
+  host: '0.0.0.0'
+  port: '8082'
+  readTimeout: '60000'
+  idleTimeout: '30000'
+  
+keyStore:
+  type: 'JKS'
+  path: 'certificates/keystore-nonprod.jks'
+  alias: 'clickhouse'
+  keyPassword: 'click1234house'
+  password: 'click1234house'
+
+google:
+  sheet:
+    protocol: 'HTTPS'
+    host: 'sheets.googleapis.com'
+    port: ''
+    path: '/v4/spreadsheets/{spreadsheetId}/values/{range}:append'
+    sheetId: '1IyrS3hglVygV01vjtURkY8TRiIU9urX6hRt7J9mK0RU'
+    workbookId: 'Sheet1'
+    maxConnections: '-1'
+    idleTimeout: '30000'
+    bufferSize: '1024'
+    
+salesforce:
+    cert-alias: "mulesoft_app"
+    principal: "vipin.dwivedi@nttdata.com.uat"
+    token-endpoint: "https://test.salesforce.com/services/oauth2/token"
+    jks-file: "00DDy0000008xOl.jks"
+    object-ttl: "30"
+    max-entries: "10"
+    connection-timeout: "0"
+    login-request-timeout: "0"
+    read-timeout: "0"
+    frequency: "2000"
+    reconnection-attempts: "2"
+    
+slack:
+    base-uri: "https://slack.com/api"
+    authorization-url: "https://slack.com/oauth/v2/authorize"
+    access-token-url: "https://slack.com/api/oauth.v2.access"
+    scopes: "channels:manage channels:write.invites channels:write.topic im:write mpim:write chat:write chat:write.public groups:write"
+    callback-path: "/callback"
+    authorize-path: "/authorize"
+    external-callback-url: "https://ci-ttd-referrals-prc-app-5vw5ac.tnlau0.usa-e2.cloudhub.io/callback"
+    response-timeout: "1"
+    connection-timeout: "30"
+    max-connections: "-1"
+    connection-idle-timeout: "30"
+    response-buffer-size: "-1"
+    frequency : "2000"
+    reconnection-attempts: "2"
+    
+email:
+    host: "imap.gmail.com"
+    port: "993"
+    connection-timeout: "10"
+    read-timeout: "10"
+    write-timeout: "10"
+    user: "tejaswini.sunnewar@choozle.com"
+    password: "ackb iyog tton wnqp"

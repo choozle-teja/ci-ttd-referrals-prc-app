@@ -1,0 +1,27 @@
+# Environment-agnostic properties
+
+application:
+  name: "template-api"
+  version: "v1"
+  
+spring:
+  files: "beans.xml"
+  realm: "mule"
+  name: "mule"
+  delegatereference: "authenticationManager"
+  
+google:
+  token:
+    protocol: 'HTTPS'
+    host: 'oauth2.googleapis.com'
+    port: ''
+    path: '/token'
+    maxConnections: '-1'
+    idleTimeout: '30000'
+    bufferSize: '1024'
+    
+object-store:
+    frequency: "2000"
+    reconnection-attempts: "2"
+    entry-ttl: "-1"
+    expiration-interval: "-1"

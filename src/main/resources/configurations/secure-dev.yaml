@@ -1,0 +1,11 @@
+# Development environment-specific secure properties
+salesforce:
+  consumer-key: "![IunDCyQjj+zzCO5eyWvQ7/cEVK4xBYQDCr5X/ZJKCWacy3xqEsMPtyXyR9kSOmyaR1maI8TtwjVf37W+oknMRY2CzmQ2JwJSP8omnVyj5tR1e4+KD+eAEUOdYhJVyHb1]"
+  consumer-secret: "![5/8aALXJtou43Wib3WYcnkDN61pLCbsQwcl2lvlk4t+MA71MPGC/04FlNocUm/EEBMfqkIHOOM3/jvlQdQcGoQSpZU4oUaIKEUYe6t1U96U=]"
+  store-password: "![wU6Px5Q+/6Sc2PELaqsurg==]"
+
+slack:
+#  consumer-key: "![yr0KDLCvMgg3ad3qy1LcItTBDubJGQRoR/DHsbzfs5I=]"
+#  consumer-secret: "![1eiMsU2DAXsiNQ7wfS6Y3ptfNfw1j1KgPN9KhE2tKrYXcDS13U1/iqq1yw9xPFv7]"
+  consumer-key: "7072336574599.7099584149505"
+  consumer-secret: "133fc44976fddaeb5fee26802ec65273"
